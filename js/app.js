@@ -396,12 +396,36 @@ const App = {
             }
         });
 
-        // 页面隐藏时保存状态
+        // 页面可见性变化时的处理
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden && this.state.isRunning) {
-                this.saveState();
+            if (document.hidden) {
+                // 页面隐藏时保存状态
+                if (this.state.isRunning) {
+                    this.saveState();
+                }
+            } else {
+                // 页面重新可见时，检查是否有遗漏的完成事件
+                this.checkMissedCompletion();
             }
         });
+    },
+
+    // 检查是否有遗漏的完成事件
+    checkMissedCompletion() {
+        if (!this.state.isRunning || this.state.isPaused) {
+            return;
+        }
+
+        // 检查工作计时器是否已完成
+        if (this.state.mode === 'work' && this.workTimer.remaining <= 0) {
+            console.log('检测到遗漏的工作完成事件，触发完成');
+            this.onWorkComplete();
+        }
+        // 检查休息计时器是否已完成
+        else if (this.state.mode === 'break' && this.breakTimer.remaining <= 0) {
+            console.log('检测到遗漏的休息完成事件，触发完成');
+            this.onBreakComplete();
+        }
     }
 };
 

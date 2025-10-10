@@ -37,7 +37,7 @@ const NotificationSystem = {
     },
 
     // 发送桌面通知
-    sendNotification(title, body, icon = '👁️') {
+    sendNotification(title, body, icon = '👁️', options = {}) {
         if (!('Notification' in window)) {
             return;
         }
@@ -49,12 +49,17 @@ const NotificationSystem = {
                     icon: icon,
                     badge: icon,
                     tag: 'eye-care-reminder',
-                    requireInteraction: false,
-                    silent: false
+                    requireInteraction: options.requireInteraction || false,
+                    silent: false,
+                    // 添加震动支持（移动设备）
+                    vibrate: [200, 100, 200],
+                    // 重新通知（即使标签页在后台也会显示）
+                    renotify: true
                 });
 
-                // 3秒后自动关闭
-                setTimeout(() => notification.close(), 3000);
+                // 根据选项决定关闭时间
+                const autoCloseTime = options.requireInteraction ? 10000 : 5000;
+                setTimeout(() => notification.close(), autoCloseTime);
 
                 // 点击通知时聚焦窗口
                 notification.onclick = () => {
@@ -133,11 +138,13 @@ const NotificationSystem = {
         const messages = {
             work: {
                 title: '🌟 休息时间到了！',
-                body: '请看向 6 米（20英尺）外的物体，休息 20 秒'
+                body: '请看向 6 米（20英尺）外的物体，休息 20 秒',
+                requireInteraction: true  // 工作结束需要用户注意
             },
             break: {
                 title: '💼 休息结束',
-                body: '继续专注工作吧！'
+                body: '继续专注工作吧！',
+                requireInteraction: false
             }
         };
 
@@ -146,13 +153,49 @@ const NotificationSystem = {
 
         // 发送桌面通知
         if (settings.notificationEnabled) {
-            this.sendNotification(message.title, message.body);
+            this.sendNotification(
+                message.title,
+                message.body,
+                '👁️',
+                { requireInteraction: message.requireInteraction }
+            );
         }
 
         // 播放提示音
         if (settings.soundEnabled) {
             this.playSound();
         }
+
+        // 如果页面在后台，在标题中显示提醒
+        if (document.hidden) {
+            this.flashTitle(message.title);
+        }
+    },
+
+    // 在标题栏闪烁提醒
+    flashTitle(message) {
+        const originalTitle = document.title;
+        let count = 0;
+        const maxFlashes = 10;
+
+        const interval = setInterval(() => {
+            if (!document.hidden || count >= maxFlashes) {
+                document.title = originalTitle;
+                clearInterval(interval);
+                return;
+            }
+
+            document.title = count % 2 === 0 ? message : originalTitle;
+            count++;
+        }, 1000);
+
+        // 页面重新可见时恢复标题
+        const visibilityHandler = () => {
+            document.title = originalTitle;
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', visibilityHandler);
+        };
+        document.addEventListener('visibilitychange', visibilityHandler);
     },
 
     // 检查是否支持通知
