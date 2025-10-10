@@ -307,7 +307,11 @@ const App = {
             isRunning: this.state.isRunning,
             isPaused: this.state.isPaused,
             workRemaining: this.workTimer.getRemainingTime(),
-            breakRemaining: this.breakTimer.getRemainingTime()
+            breakRemaining: this.breakTimer.getRemainingTime(),
+            workStartTime: this.workTimer.startTime,
+            breakStartTime: this.breakTimer.startTime,
+            workPausedTime: this.workTimer.pausedTime,
+            breakPausedTime: this.breakTimer.pausedTime
         };
         Storage.saveTimerState(state);
     },
@@ -327,9 +331,13 @@ const App = {
         this.state.isRunning = savedState.isRunning;
         this.state.isPaused = savedState.isPaused;
 
-        // 恢复计时器
+        // 恢复计时器的时间戳和剩余时间
         this.workTimer.remaining = savedState.workRemaining;
         this.breakTimer.remaining = savedState.breakRemaining;
+        this.workTimer.startTime = savedState.workStartTime;
+        this.breakTimer.startTime = savedState.breakStartTime;
+        this.workTimer.pausedTime = savedState.workPausedTime || 0;
+        this.breakTimer.pausedTime = savedState.breakPausedTime || 0;
 
         // 设置当前计时器
         if (this.state.mode === 'work') {
@@ -345,6 +353,7 @@ const App = {
                 if (this.workTimer.remaining <= 0) {
                     this.onWorkComplete();
                 } else {
+                    this.workTimer.isRunning = true;
                     this.workTimer.start();
                     UI.updateButtons('running');
                     UI.updateStatusText('工作中 💼');
@@ -354,6 +363,7 @@ const App = {
                 if (this.breakTimer.remaining <= 0) {
                     this.onBreakComplete();
                 } else {
+                    this.breakTimer.isRunning = true;
                     UI.showBreakReminder();
                     this.breakTimer.start();
                     UI.updateButtons('break');
@@ -361,6 +371,8 @@ const App = {
             }
         } else if (this.state.isPaused) {
             // 恢复暂停状态
+            this.currentTimer.isRunning = true;
+            this.currentTimer.isPaused = true;
             UI.updateButtons('paused');
             UI.updateStatusText('已暂停 ⏸️');
         }

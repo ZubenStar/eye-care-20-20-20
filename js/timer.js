@@ -8,6 +8,9 @@ class Timer {
         this.intervalId = null;
         this.isPaused = false;
         this.isRunning = false;
+        this.startTime = null;         // 开始时间戳
+        this.pausedTime = 0;           // 暂停累计时间
+        this.lastPauseStart = null;    // 最后一次暂停的开始时间
     }
 
     // 启动计时器
@@ -19,31 +22,53 @@ class Timer {
         this.isRunning = true;
         this.isPaused = false;
 
+        // 记录开始时间
+        if (!this.startTime) {
+            this.startTime = Date.now();
+            this.pausedTime = 0;
+        }
+
         this.intervalId = setInterval(() => {
             if (!this.isPaused) {
-                this.remaining--;
+                // 基于时间戳计算实际经过的时间
+                const elapsed = Math.floor((Date.now() - this.startTime - this.pausedTime) / 1000);
+                const newRemaining = Math.max(0, this.duration - elapsed);
 
-                // 触发每秒回调
-                if (this.onTick) {
-                    this.onTick(this.remaining, this.duration);
-                }
+                // 只有当剩余时间变化时才更新
+                if (newRemaining !== this.remaining) {
+                    this.remaining = newRemaining;
 
-                // 检查是否完成
-                if (this.remaining <= 0) {
-                    this.complete();
+                    // 触发每秒回调
+                    if (this.onTick) {
+                        this.onTick(this.remaining, this.duration);
+                    }
+
+                    // 检查是否完成
+                    if (this.remaining <= 0) {
+                        this.complete();
+                    }
                 }
             }
-        }, 1000);
+        }, 100); // 使用更频繁的检查以保证准确性
     }
 
     // 暂停计时器
     pause() {
-        this.isPaused = true;
+        if (!this.isPaused && this.isRunning) {
+            this.isPaused = true;
+            this.lastPauseStart = Date.now();
+        }
     }
 
     // 恢复计时器
     resume() {
-        this.isPaused = false;
+        if (this.isPaused && this.isRunning) {
+            this.isPaused = false;
+            if (this.lastPauseStart) {
+                this.pausedTime += Date.now() - this.lastPauseStart;
+                this.lastPauseStart = null;
+            }
+        }
     }
 
     // 停止计时器
@@ -63,6 +88,9 @@ class Timer {
             this.duration = newDuration;
         }
         this.remaining = this.duration;
+        this.startTime = null;
+        this.pausedTime = 0;
+        this.lastPauseStart = null;
     }
 
     // 完成计时

@@ -109,6 +109,10 @@ const Storage = {
                 isPaused: state.isPaused,
                 workRemaining: state.workRemaining,
                 breakRemaining: state.breakRemaining,
+                workStartTime: state.workStartTime,
+                breakStartTime: state.breakStartTime,
+                workPausedTime: state.workPausedTime,
+                breakPausedTime: state.breakPausedTime,
                 timestamp: Date.now()
             };
             localStorage.setItem('eyeCareTimerState', JSON.stringify(timerState));
@@ -126,7 +130,8 @@ const Storage = {
             if (!state) return null;
             
             const timerState = JSON.parse(state);
-            const elapsed = Math.floor((Date.now() - timerState.timestamp) / 1000);
+            const now = Date.now();
+            const elapsed = Math.floor((now - timerState.timestamp) / 1000);
             
             // 如果超过5分钟没有活动，清除状态
             if (elapsed > 300) {
@@ -134,12 +139,13 @@ const Storage = {
                 return null;
             }
             
-            // 调整剩余时间（考虑页面关闭期间的时间流逝）
+            // 调整时间戳以补偿页面关闭期间的时间
             if (timerState.isRunning && !timerState.isPaused) {
-                if (timerState.mode === 'work') {
-                    timerState.workRemaining = Math.max(0, timerState.workRemaining - elapsed);
-                } else if (timerState.mode === 'break') {
-                    timerState.breakRemaining = Math.max(0, timerState.breakRemaining - elapsed);
+                const timeDiff = now - timerState.timestamp;
+                if (timerState.mode === 'work' && timerState.workStartTime) {
+                    timerState.workStartTime -= timeDiff;
+                } else if (timerState.mode === 'break' && timerState.breakStartTime) {
+                    timerState.breakStartTime -= timeDiff;
                 }
             }
             
