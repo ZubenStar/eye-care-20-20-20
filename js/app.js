@@ -35,8 +35,14 @@ const App = {
         // 加载统计数据
         this.loadStats();
         
+        // 恢复保存的状态
+        this.restoreState();
+        
         // 初始化 UI
         this.updateUI();
+        
+        // 自动保存状态
+        this.startAutoSave();
         
         // 请求通知权限
         if (this.settings.notificationEnabled) {
@@ -154,6 +160,9 @@ const App = {
         this.workTimer.reset(this.settings.workDuration);
         this.breakTimer.reset(this.settings.breakDuration);
         this.currentTimer = this.workTimer;
+
+        // 清除保存的状态
+        Storage.clearTimerState();
 
         // 更新 UI
         this.updateUI();
@@ -289,6 +298,98 @@ const App = {
     isModalOpen() {
         return UI.elements.settingsModal.classList.contains('active') ||
                UI.elements.statsModal.classList.contains('active');
+    },
+
+    // 保存当前状态
+    saveState() {
+        const state = {
+            mode: this.state.mode,
+            isRunning: this.state.isRunning,
+            isPaused: this.state.isPaused,
+            workRemaining: this.workTimer.getRemainingTime(),
+            breakRemaining: this.breakTimer.getRemainingTime()
+        };
+        Storage.saveTimerState(state);
+    },
+
+    // 恢复保存的状态
+    restoreState() {
+        const savedState = Storage.getTimerState();
+        if (!savedState) {
+            console.log('没有保存的状态');
+            return;
+        }
+
+        console.log('恢复保存的状态:', savedState);
+
+        // 恢复状态
+        this.state.mode = savedState.mode;
+        this.state.isRunning = savedState.isRunning;
+        this.state.isPaused = savedState.isPaused;
+
+        // 恢复计时器
+        this.workTimer.remaining = savedState.workRemaining;
+        this.breakTimer.remaining = savedState.breakRemaining;
+
+        // 设置当前计时器
+        if (this.state.mode === 'work') {
+            this.currentTimer = this.workTimer;
+        } else {
+            this.currentTimer = this.breakTimer;
+        }
+
+        // 如果正在运行且未暂停，继续计时
+        if (this.state.isRunning && !this.state.isPaused) {
+            if (this.state.mode === 'work') {
+                // 检查工作时间是否已结束
+                if (this.workTimer.remaining <= 0) {
+                    this.onWorkComplete();
+                } else {
+                    this.workTimer.start();
+                    UI.updateButtons('running');
+                    UI.updateStatusText('工作中 💼');
+                }
+            } else if (this.state.mode === 'break') {
+                // 检查休息时间是否已结束
+                if (this.breakTimer.remaining <= 0) {
+                    this.onBreakComplete();
+                } else {
+                    UI.showBreakReminder();
+                    this.breakTimer.start();
+                    UI.updateButtons('break');
+                }
+            }
+        } else if (this.state.isPaused) {
+            // 恢复暂停状态
+            UI.updateButtons('paused');
+            UI.updateStatusText('已暂停 ⏸️');
+        }
+
+        console.log('状态恢复完成');
+    },
+
+    // 开始自动保存
+    startAutoSave() {
+        // 每秒保存一次状态
+        setInterval(() => {
+            if (this.state.isRunning) {
+                this.saveState();
+            }
+        }, 1000);
+
+        // 页面关闭前保存状态
+        window.addEventListener('beforeunload', () => {
+            if (this.state.isRunning) {
+                this.saveState();
+            }
+        });
+
+        // 页面隐藏时保存状态
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && this.state.isRunning) {
+                this.saveState();
+            }
+        });
     }
 };
 

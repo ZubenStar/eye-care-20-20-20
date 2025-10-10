@@ -98,5 +98,66 @@ const Storage = {
         const settings = this.getSettings();
         settings.theme = theme;
         this.saveSettings(settings);
+    },
+
+    // 保存计时器状态
+    saveTimerState(state) {
+        try {
+            const timerState = {
+                mode: state.mode,
+                isRunning: state.isRunning,
+                isPaused: state.isPaused,
+                workRemaining: state.workRemaining,
+                breakRemaining: state.breakRemaining,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('eyeCareTimerState', JSON.stringify(timerState));
+            return true;
+        } catch (error) {
+            console.error('保存计时器状态失败:', error);
+            return false;
+        }
+    },
+
+    // 获取计时器状态
+    getTimerState() {
+        try {
+            const state = localStorage.getItem('eyeCareTimerState');
+            if (!state) return null;
+            
+            const timerState = JSON.parse(state);
+            const elapsed = Math.floor((Date.now() - timerState.timestamp) / 1000);
+            
+            // 如果超过5分钟没有活动，清除状态
+            if (elapsed > 300) {
+                this.clearTimerState();
+                return null;
+            }
+            
+            // 调整剩余时间（考虑页面关闭期间的时间流逝）
+            if (timerState.isRunning && !timerState.isPaused) {
+                if (timerState.mode === 'work') {
+                    timerState.workRemaining = Math.max(0, timerState.workRemaining - elapsed);
+                } else if (timerState.mode === 'break') {
+                    timerState.breakRemaining = Math.max(0, timerState.breakRemaining - elapsed);
+                }
+            }
+            
+            return timerState;
+        } catch (error) {
+            console.error('读取计时器状态失败:', error);
+            return null;
+        }
+    },
+
+    // 清除计时器状态
+    clearTimerState() {
+        try {
+            localStorage.removeItem('eyeCareTimerState');
+            return true;
+        } catch (error) {
+            console.error('清除计时器状态失败:', error);
+            return false;
+        }
     }
 };
