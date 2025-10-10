@@ -29,6 +29,8 @@ const UI = {
             // 休息提醒
             breakOverlay: document.getElementById('breakOverlay'),
             breakTimer: document.getElementById('breakTimer'),
+            breakHint: document.getElementById('breakHint'),
+            startBreakBtn: document.getElementById('startBreakBtn'),
             skipBtn: document.getElementById('skipBtn'),
 
             // 模态框

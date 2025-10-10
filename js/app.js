@@ -81,6 +81,7 @@ const App = {
         elements.resetBtn.addEventListener('click', () => this.handleReset());
 
         // 休息提醒
+        elements.startBreakBtn.addEventListener('click', () => this.handleStartBreak());
         elements.skipBtn.addEventListener('click', () => this.handleSkipBreak());
 
         // 工具按钮
@@ -171,6 +172,20 @@ const App = {
         UI.hideBreakReminder();
     },
 
+    // 开始休息
+    handleStartBreak() {
+        if (this.state.mode === 'break' && !this.breakTimer.isRunning) {
+            // 开始休息倒计时
+            this.breakTimer.start();
+            
+            // 更新提示文本和按钮状态
+            UI.elements.breakHint.textContent = '让眼睛放松一下';
+            UI.elements.startBreakBtn.style.display = 'none';
+            
+            console.log('用户手动开始休息');
+        }
+    },
+
     // 跳过休息
     handleSkipBreak() {
         if (this.state.mode === 'break') {
@@ -234,15 +249,22 @@ const App = {
         this.state.mode = 'break';
         this.currentTimer = this.breakTimer;
 
+        // 重置休息计时器，确保从完整时长开始
+        this.breakTimer.reset(this.settings.breakDuration);
+
         // 发送提醒
         NotificationSystem.sendReminder('work', this.settings);
 
-        // 显示休息提醒
+        // 显示休息提醒（但不自动开始倒计时）
         UI.showBreakReminder();
         UI.updateButtons('break');
+        
+        // 重置界面状态
+        UI.elements.breakHint.textContent = '准备好后点击开始休息';
+        UI.elements.startBreakBtn.style.display = 'inline-flex';
+        UI.elements.breakTimer.textContent = this.settings.breakDuration;
 
-        // 开始休息倒计时
-        this.breakTimer.start();
+        console.log('等待用户手动开始休息');
     },
 
     // 休息计时回调
@@ -363,10 +385,21 @@ const App = {
                 if (this.breakTimer.remaining <= 0) {
                     this.onBreakComplete();
                 } else {
+                    // 恢复休息状态
                     this.breakTimer.isRunning = true;
                     UI.showBreakReminder();
-                    this.breakTimer.start();
                     UI.updateButtons('break');
+                    
+                    // 如果计时器的startTime存在，说明已经开始了休息
+                    if (this.breakTimer.startTime) {
+                        this.breakTimer.start();
+                        UI.elements.breakHint.textContent = '让眼睛放松一下';
+                        UI.elements.startBreakBtn.style.display = 'none';
+                    } else {
+                        // 还没开始休息，显示开始按钮
+                        UI.elements.breakHint.textContent = '准备好后点击开始休息';
+                        UI.elements.startBreakBtn.style.display = 'inline-flex';
+                    }
                 }
             }
         } else if (this.state.isPaused) {

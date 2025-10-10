@@ -329,6 +329,17 @@ body {
     margin-bottom: 32px;
 }
 
+.break-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+}
+
+.break-actions .btn {
+    min-width: 140px;
+}
+
 .btn-skip {
     background: rgba(255, 255, 255, 0.1);
     color: white;
@@ -336,9 +347,10 @@ body {
     padding: 12px 32px;
 }
 
-.btn-skip:hover {
+.btn-skip:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.2);
     border-color: white;
+    transform: translateY(-2px);
 }
 
 /* ==================== 模态框 ==================== */
