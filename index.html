@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="20-20-20 护眼法则提醒工具 - 每20分钟提醒你休息20秒，看向20英尺外">
+    <meta name="keywords" content="护眼,20-20-20,眼睛健康,休息提醒">
+    <title>20-20-20 护眼助手</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <h1 class="title">👁️ 20-20-20 护眼助手</h1>
+            <p class="subtitle">每20分钟，看20英尺外，持续20秒</p>
+        </header>
+
+        <!-- 主计时器区域 -->
+        <main class="main-content">
+            <!-- 进度环 -->
+            <div class="timer-container">
+                <svg class="progress-ring" width="280" height="280">
+                    <circle class="progress-ring-bg" 
+                            cx="140" cy="140" r="120" 
+                            stroke-width="12" 
+                            fill="none">
+                    </circle>
+                    <circle class="progress-ring-circle" 
+                            cx="140" cy="140" r="120" 
+                            stroke-width="12" 
+                            fill="none"
+                            stroke-dasharray="753.98"
+                            stroke-dashoffset="0">
+                    </circle>
+                </svg>
+                
+                <!-- 时间显示 -->
+                <div class="timer-display">
+                    <div class="time-text" id="timeDisplay">20:00</div>
+                    <div class="status-text" id="statusText">准备开始</div>
+                </div>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn">
+                    <span class="btn-icon">▶️</span>
+                    <span class="btn-text">开始</span>
+                </button>
+                <button class="btn btn-secondary" id="pauseBtn" disabled>
+                    <span class="btn-icon">⏸️</span>
+                    <span class="btn-text">暂停</span>
+                </button>
+                <button class="btn btn-secondary" id="resetBtn">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">重置</span>
+                </button>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="todayCount">0</div>
+                    <div class="stat-label">今日完成</div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">累计完成</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部工具栏 -->
+        <footer class="toolbar">
+            <button class="tool-btn" id="settingsBtn" title="设置">
+                <span class="tool-icon">⚙️</span>
+                <span class="tool-label">设置</span>
+            </button>
+            <button class="tool-btn" id="statsBtn" title="统计">
+                <span class="tool-icon">📊</span>
+                <span class="tool-label">统计</span>
+            </button>
+            <button class="tool-btn" id="themeBtn" title="切换主题">
+                <span class="tool-icon">🌓</span>
+                <span class="tool-label">主题</span>
+            </button>
+        </footer>
+    </div>
+
+    <!-- 休息提醒全屏覆盖层 -->
+    <div class="break-overlay" id="breakOverlay">
+        <div class="break-content">
+            <div class="break-icon">🌟</div>
+            <h2 class="break-title">休息时间到了！</h2>
+            <p class="break-description">请看向 6 米（20英尺）外的物体</p>
+            <div class="break-timer" id="breakTimer">20</div>
+            <p class="break-hint">让眼睛放松一下</p>
+            <button class="btn btn-skip" id="skipBtn">跳过休息 →</button>
+        </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">⚙️ 设置</h3>
+                <button class="modal-close" id="closeSettings">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <span class="label-text">工作时长（分钟）</span>
+                        <input type="number" id="workDuration" class="setting-input" 
+                               min="1" max="60" value="20">
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <span class="label-text">休息时长（秒）</span>
+                        <input type="number" id="breakDuration" class="setting-input" 
+                               min="5" max="120" value="20">
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <span class="label-text">启用声音提醒</span>
+                        <input type="checkbox" id="soundEnabled" class="setting-checkbox" checked>
+                    </label>
+                </div>
+                <div class="setting-group">
+                    <label class="setting-label">
+                        <span class="label-text">启用桌面通知</span>
+                        <input type="checkbox" id="notificationEnabled" class="setting-checkbox" checked>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveSettings">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计面板 -->
+    <div class="modal" id="statsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">📊 统计数据</h3>
+                <button class="modal-close" id="closeStats">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="stats-detail">
+                    <div class="stats-card">
+                        <div class="stats-icon">📅</div>
+                        <div class="stats-info">
+                            <div class="stats-value" id="statsToday">0</div>
+                            <div class="stats-desc">今日完成次数</div>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-icon">🎯</div>
+                        <div class="stats-info">
+                            <div class="stats-value" id="statsTotal">0</div>
+                            <div class="stats-desc">累计完成次数</div>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-icon">⏱️</div>
+                        <div class="stats-info">
+                            <div class="stats-value" id="statsTime">0</div>
+                            <div class="stats-desc">累计护眼时长（分钟）</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-actions">
+                    <button class="btn btn-secondary" id="resetStats">清空统计数据</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 文件 -->
+    <script src="js/storage.js"></script>
+    <script src="js/timer.js"></script>
+    <script src="js/notification.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
