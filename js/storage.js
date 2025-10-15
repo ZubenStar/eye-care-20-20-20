@@ -14,7 +14,9 @@ const Storage = {
         todayCount: 0,
         totalCount: 0,
         lastResetDate: new Date().toISOString().split('T')[0],
-        totalBreakTime: 0
+        totalBreakTime: 0,
+        waterAmount: 0,
+        waterLastResetDate: new Date().toISOString().split('T')[0]
     },
 
     // 获取设置
@@ -53,6 +55,13 @@ const Storage = {
                 this.saveStats(data);
             }
             
+            // 检查喝水统计是否需要重置
+            if (!data.waterLastResetDate || data.waterLastResetDate !== today) {
+                data.waterAmount = 0;
+                data.waterLastResetDate = today;
+                this.saveStats(data);
+            }
+            
             return data;
         } catch (error) {
             console.error('读取统计数据失败:', error);
@@ -85,6 +94,24 @@ const Storage = {
     resetStats() {
         this.saveStats(this.defaultStats);
         return this.defaultStats;
+    },
+
+    // 增加喝水量（默认200ml）
+    incrementWaterAmount(amount = 200) {
+        const stats = this.getStats();
+        stats.waterAmount = (stats.waterAmount || 0) + amount;
+        this.saveStats(stats);
+        return stats;
+    },
+
+    // 减少喝水量（默认200ml）
+    decrementWaterAmount(amount = 200) {
+        const stats = this.getStats();
+        if (stats.waterAmount > 0) {
+            stats.waterAmount = Math.max(0, stats.waterAmount - amount);
+            this.saveStats(stats);
+        }
+        return stats;
     },
 
     // 获取主题

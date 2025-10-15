@@ -89,6 +89,11 @@ const App = {
         elements.statsBtn.addEventListener('click', () => UI.showStatsModal());
         elements.themeBtn.addEventListener('click', () => this.handleThemeToggle());
 
+        // 喝水按钮
+        elements.waterPlusBtn.addEventListener('click', () => this.handleWaterPlus());
+        elements.waterMinusBtn.addEventListener('click', () => this.handleWaterMinus());
+        elements.waterCustomBtn.addEventListener('click', () => this.handleWaterCustom());
+
         // 模态框
         elements.closeSettings.addEventListener('click', () => UI.hideSettingsModal());
         elements.closeStats.addEventListener('click', () => UI.hideStatsModal());
@@ -233,6 +238,30 @@ const App = {
     handleThemeToggle() {
         const theme = UI.toggleTheme();
         UI.showToast(theme === 'dark' ? '已切换到深色模式 🌙' : '已切换到浅色模式 ☀️');
+    },
+
+    // 增加喝水量
+    handleWaterPlus() {
+        const stats = Storage.incrementWaterAmount(200);
+        UI.updateStats(stats);
+        UI.showToast('💧 已记录喝水 +200ml');
+    },
+
+    // 减少喝水量
+    handleWaterMinus() {
+        const stats = Storage.decrementWaterAmount(200);
+        UI.updateStats(stats);
+        UI.showToast('💧 已减少喝水记录 -200ml');
+    },
+
+    // 自定义喝水量
+    handleWaterCustom() {
+        const amount = UI.showCustomWaterInput();
+        if (amount !== null) {
+            const stats = Storage.incrementWaterAmount(amount);
+            UI.updateStats(stats);
+            UI.showToast(`💧 已记录喝水 +${amount}ml`);
+        }
     },
 
     // 工作计时回调

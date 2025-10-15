@@ -26,6 +26,13 @@ const UI = {
             todayCount: document.getElementById('todayCount'),
             totalCount: document.getElementById('totalCount'),
 
+            // 喝水统计
+            waterAmount: document.getElementById('waterAmount'),
+            waterPlusBtn: document.getElementById('waterPlusBtn'),
+            waterMinusBtn: document.getElementById('waterMinusBtn'),
+            waterCustomBtn: document.getElementById('waterCustomBtn'),
+            statsWater: document.getElementById('statsWater'),
+
             // 休息提醒
             breakOverlay: document.getElementById('breakOverlay'),
             breakTimer: document.getElementById('breakTimer'),
@@ -138,6 +145,9 @@ const UI = {
         if (this.elements.totalCount) {
             this.elements.totalCount.textContent = stats.totalCount;
         }
+        if (this.elements.waterAmount) {
+            this.elements.waterAmount.textContent = stats.waterAmount || 0;
+        }
     },
 
     // 更新统计详情
@@ -151,6 +161,9 @@ const UI = {
         if (this.elements.statsTime) {
             const minutes = Math.floor(stats.totalBreakTime / 60);
             this.elements.statsTime.textContent = minutes;
+        }
+        if (this.elements.statsWater) {
+            this.elements.statsWater.textContent = `${stats.waterAmount || 0} ml`;
         }
     },
 
@@ -241,6 +254,24 @@ const UI = {
         const theme = isDark ? 'dark' : 'light';
         Storage.saveTheme(theme);
         return theme;
+    },
+
+    // 显示自定义喝水输入提示
+    showCustomWaterInput() {
+        const amount = prompt('请输入喝水量（ml）：', '250');
+        if (amount !== null && amount.trim() !== '') {
+            const ml = parseInt(amount);
+            if (isNaN(ml) || ml <= 0) {
+                this.showToast('❌ 请输入有效的数字');
+                return null;
+            }
+            if (ml > 5000) {
+                this.showToast('❌ 单次饮水量不能超过5000ml');
+                return null;
+            }
+            return ml;
+        }
+        return null;
     },
 
     // 显示提示消息

@@ -232,6 +232,135 @@ body {
     background: var(--border-color);
 }
 
+/* ==================== 喝水统计 ==================== */
+.water-section {
+    width: 100%;
+    background: var(--background);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.water-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.water-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.water-icon {
+    font-size: 24px;
+}
+
+.water-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.water-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.water-amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2196F3;
+}
+
+.water-unit {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2196F3;
+    opacity: 0.8;
+}
+
+.water-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.water-btn {
+    min-width: 70px;
+    height: 44px;
+    border-radius: 22px;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-family: var(--font-family);
+    padding: 0 16px;
+}
+
+.water-btn-plus {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.water-btn-plus:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+}
+
+.water-btn-plus:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.water-btn-minus {
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.water-btn-minus:hover {
+    background: var(--background);
+    border-color: #2196F3;
+    color: #2196F3;
+    transform: translateY(-2px);
+}
+
+.water-btn-minus:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.water-btn-custom {
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+}
+
+.water-btn-custom:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 16px rgba(156, 39, 176, 0.4);
+}
+
+.water-btn-custom:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.water-hint {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 /* ==================== 底部工具栏 ==================== */
 .toolbar {
     display: flex;
@@ -606,5 +735,19 @@ body {
     
     .tool-label {
         display: none;
+    }
+    
+    .water-section {
+        padding: 16px;
+    }
+    
+    .water-count {
+        font-size: 28px;
+    }
+    
+    .water-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
     }
 }

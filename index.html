@@ -71,6 +71,32 @@
                     <div class="stat-label">累计完成</div>
                 </div>
             </div>
+
+            <!-- 喝水统计 -->
+            <div class="water-section">
+                <div class="water-header">
+                    <div class="water-title">
+                        <span class="water-icon">💧</span>
+                        <span class="water-text">今日喝水</span>
+                    </div>
+                    <div class="water-display">
+                        <span class="water-amount" id="waterAmount">0</span>
+                        <span class="water-unit">ml</span>
+                    </div>
+                </div>
+                <div class="water-controls">
+                    <button class="water-btn water-btn-minus" id="waterMinusBtn" title="减少200ml">
+                        <span>−200</span>
+                    </button>
+                    <button class="water-btn water-btn-plus" id="waterPlusBtn" title="增加200ml">
+                        <span>+200</span>
+                    </button>
+                    <button class="water-btn water-btn-custom" id="waterCustomBtn" title="自定义ml">
+                        <span>自定义</span>
+                    </button>
+                </div>
+                <div class="water-hint">建议每天饮水1500-2000ml</div>
+            </div>
         </main>
 
         <!-- 底部工具栏 -->
@@ -177,6 +203,13 @@
                         <div class="stats-info">
                             <div class="stats-value" id="statsTime">0</div>
                             <div class="stats-desc">累计护眼时长（分钟）</div>
+                        </div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-icon">💧</div>
+                        <div class="stats-info">
+                            <div class="stats-value" id="statsWater">0 ml</div>
+                            <div class="stats-desc">今日饮水量</div>
                         </div>
                     </div>
                 </div>
