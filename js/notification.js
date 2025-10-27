@@ -10,6 +10,22 @@ const NotificationSystem = {
     init() {
         this.checkPermission();
         this.initAudio();
+        this.setupVisibilityHandler();
+    },
+
+    // 设置页面可见性处理
+    setupVisibilityHandler() {
+        document.addEventListener('visibilitychange', () => {
+            // 当页面重新可见时，确保音频上下文处于运行状态
+            if (!document.hidden && this.audio && this.audio.context) {
+                if (this.audio.context.state === 'suspended') {
+                    console.log('页面重新可见，恢复音频上下文');
+                    this.audio.context.resume().catch(err => {
+                        console.error('恢复音频上下文失败:', err);
+                    });
+                }
+            }
+        });
     },
 
     // 检查通知权限
@@ -80,7 +96,8 @@ const NotificationSystem = {
         // 使用 Web Audio API 生成简单的提示音
         this.audio = {
             context: null,
-            play: () => {
+            fallbackAudio: null,
+            play: async () => {
                 try {
                     // 创建音频上下文
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -89,52 +106,95 @@ const NotificationSystem = {
                     }
 
                     const ctx = this.audio.context;
-                    const oscillator = ctx.createOscillator();
-                    const gainNode = ctx.createGain();
+                    
+                    // 如果音频上下文被暂停（在后台时可能发生），先恢复它
+                    if (ctx.state === 'suspended') {
+                        console.log('音频上下文已暂停，正在恢复...');
+                        await ctx.resume();
+                    }
 
-                    oscillator.connect(gainNode);
-                    gainNode.connect(ctx.destination);
+                    // 再次检查状态，确保已恢复
+                    if (ctx.state === 'running') {
+                        // 播放第一个音
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
 
-                    // 设置音调和音量
-                    oscillator.frequency.value = 800; // 频率 800Hz
-                    oscillator.type = 'sine';
-                    gainNode.gain.value = 0.3;
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
 
-                    // 播放 0.2 秒
-                    oscillator.start(ctx.currentTime);
-                    oscillator.stop(ctx.currentTime + 0.2);
+                        // 设置音调和音量
+                        oscillator.frequency.value = 800; // 频率 800Hz
+                        oscillator.type = 'sine';
+                        gainNode.gain.value = 0.3;
 
-                    // 0.1秒后播放第二个音
-                    setTimeout(() => {
-                        const oscillator2 = ctx.createOscillator();
-                        const gainNode2 = ctx.createGain();
+                        // 播放 0.2 秒
+                        const now = ctx.currentTime;
+                        oscillator.start(now);
+                        oscillator.stop(now + 0.2);
 
-                        oscillator2.connect(gainNode2);
-                        gainNode2.connect(ctx.destination);
+                        // 0.2秒后播放第二个音
+                        setTimeout(() => {
+                            try {
+                                const oscillator2 = ctx.createOscillator();
+                                const gainNode2 = ctx.createGain();
 
-                        oscillator2.frequency.value = 1000;
-                        oscillator2.type = 'sine';
-                        gainNode2.gain.value = 0.3;
+                                oscillator2.connect(gainNode2);
+                                gainNode2.connect(ctx.destination);
 
-                        oscillator2.start(ctx.currentTime);
-                        oscillator2.stop(ctx.currentTime + 0.2);
-                    }, 200);
+                                oscillator2.frequency.value = 1000;
+                                oscillator2.type = 'sine';
+                                gainNode2.gain.value = 0.3;
+
+                                const now2 = ctx.currentTime;
+                                oscillator2.start(now2);
+                                oscillator2.stop(now2 + 0.2);
+                            } catch (err) {
+                                console.error('播放第二个音失败:', err);
+                            }
+                        }, 200);
+                    } else {
+                        throw new Error('音频上下文状态异常: ' + ctx.state);
+                    }
                 } catch (error) {
-                    console.error('播放音频失败:', error);
+                    console.error('Web Audio API 播放失败，尝试使用备用方案:', error);
+                    // 备用方案：使用简单的提示音（beep）
+                    this.playFallbackSound();
                 }
             }
         };
     },
 
+    // 备用音频播放方案
+    playFallbackSound() {
+        try {
+            // 使用系统默认提示音
+            if (window.speechSynthesis) {
+                // 使用 Web Speech API 发出简单声音
+                const utterance = new SpeechSynthesisUtterance('');
+                utterance.volume = 0.3;
+                utterance.rate = 10;
+                utterance.pitch = 2;
+                window.speechSynthesis.speak(utterance);
+            }
+        } catch (error) {
+            console.error('备用音频播放也失败:', error);
+        }
+    },
+
     // 播放提示音
-    playSound() {
+    async playSound() {
         if (this.audio && this.audio.play) {
-            this.audio.play();
+            try {
+                await this.audio.play();
+                console.log('提示音播放成功');
+            } catch (error) {
+                console.error('提示音播放失败:', error);
+            }
         }
     },
 
     // 发送完整提醒（通知 + 声音）
-    sendReminder(type, settings) {
+    async sendReminder(type, settings) {
         const messages = {
             work: {
                 title: '🌟 休息时间到了！',
@@ -151,6 +211,11 @@ const NotificationSystem = {
         const message = messages[type];
         if (!message) return;
 
+        // 播放提示音（优先播放，确保即使在后台也能响）
+        if (settings.soundEnabled) {
+            await this.playSound();
+        }
+
         // 发送桌面通知
         if (settings.notificationEnabled) {
             this.sendNotification(
@@ -159,11 +224,6 @@ const NotificationSystem = {
                 '👁️',
                 { requireInteraction: message.requireInteraction }
             );
-        }
-
-        // 播放提示音
-        if (settings.soundEnabled) {
-            this.playSound();
         }
 
         // 如果页面在后台，在标题中显示提醒

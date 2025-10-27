@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台音频测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .description {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .btn-secondary {
+            background: #2196F3;
+        }
+        .btn-secondary:hover {
+            background: #0b7dda;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 6px;
+            border-left: 4px solid #4CAF50;
+        }
+        .timer {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 20px 0;
+        }
+        .log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>🔊 后台音频播放测试</h1>
+        <div class="description">
+            此测试页面用于验证当浏览器标签页在后台时，音频提示是否能正常播放。
+            <br><br>
+            <strong>测试步骤：</strong>
+            <ol>
+                <li>点击"开始5秒倒计时"按钮</li>
+                <li>立即切换到其他标签页</li>
+                <li>等待5秒后，应该能听到提示音</li>
+            </ol>
+        </div>
+        
+        <div class="timer" id="timer">5</div>
+        
+        <button class="btn" id="startBtn">开始 5 秒倒计时</button>
+        <button class="btn btn-secondary" id="testSoundBtn">测试音频（立即播放）</button>
+        
+        <div class="status" id="status">
+            等待开始测试...
+        </div>
+        
+        <div class="log" id="log">
+            <div class="log-entry">日志输出区域</div>
+        </div>
+    </div>
+
+    <script>
+        // 引入通知系统（简化版本用于测试）
+        const TestNotificationSystem = {
+            audio: null,
+            
+            init() {
+                this.initAudio();
+                this.log('音频系统初始化完成');
+                this.setupVisibilityHandler();
+            },
+            
+            setupVisibilityHandler() {
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden && this.audio && this.audio.context) {
+                        if (this.audio.context.state === 'suspended') {
+                            this.log('页面重新可见，恢复音频上下文');
+                            this.audio.context.resume().catch(err => {
+                                this.log('恢复音频上下文失败: ' + err.message);
+                            });
+                        }
+                    }
+                    this.log('页面可见性变化: ' + (document.hidden ? '隐藏' : '可见'));
+                });
+            },
+            
+            initAudio() {
+                this.audio = {
+                    context: null,
+                    play: async () => {
+                        try {
+                            const AudioContext = window.AudioContext || window.webkitAudioContext;
+                            if (!this.audio.context) {
+                                this.audio.context = new AudioContext();
+                                this.log('创建新的音频上下文');
+                            }
+
+                            const ctx = this.audio.context;
+                            this.log('音频上下文状态: ' + ctx.state);
+                            
+                            if (ctx.state === 'suspended') {
+                                this.log('音频上下文已暂停，正在恢复...');
+                                await ctx.resume();
+                                this.log('音频上下文恢复后状态: ' + ctx.state);
+                            }
+
+                            if (ctx.state === 'running') {
+                                // 播放第一个音
+                                const oscillator = ctx.createOscillator();
+                                const gainNode = ctx.createGain();
+
+                                oscillator.connect(gainNode);
+                                gainNode.connect(ctx.destination);
+
+                                oscillator.frequency.value = 800;
+                                oscillator.type = 'sine';
+                                gainNode.gain.value = 0.3;
+
+                                const now = ctx.currentTime;
+                                oscillator.start(now);
+                                oscillator.stop(now + 0.2);
+                                
+                                this.log('播放第一个音 (800Hz)');
+
+                                // 0.2秒后播放第二个音
+                                setTimeout(() => {
+                                    try {
+                                        const oscillator2 = ctx.createOscillator();
+                                        const gainNode2 = ctx.createGain();
+
+                                        oscillator2.connect(gainNode2);
+                                        gainNode2.connect(ctx.destination);
+
+                                        oscillator2.frequency.value = 1000;
+                                        oscillator2.type = 'sine';
+                                        gainNode2.gain.value = 0.3;
+
+                                        const now2 = ctx.currentTime;
+                                        oscillator2.start(now2);
+                                        oscillator2.stop(now2 + 0.2);
+                                        
+                                        this.log('播放第二个音 (1000Hz)');
+                                    } catch (err) {
+                                        this.log('播放第二个音失败: ' + err.message);
+                                    }
+                                }, 200);
+                            } else {
+                                throw new Error('音频上下文状态异常: ' + ctx.state);
+                            }
+                        } catch (error) {
+                            this.log('播放音频失败: ' + error.message);
+                        }
+                    }
+                };
+            },
+            
+            async playSound() {
+                this.log('开始播放提示音...');
+                if (this.audio && this.audio.play) {
+                    await this.audio.play();
+                    this.log('✓ 提示音播放完成');
+                }
+            },
+            
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = 'log-entry';
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                document.getElementById('log').appendChild(logEntry);
+                document.getElementById('log').scrollTop = document.getElementById('log').scrollHeight;
+                console.log(message);
+            }
+        };
+
+        // 初始化
+        TestNotificationSystem.init();
+
+        // 倒计时功能
+        let countdown = null;
+        const timerDisplay = document.getElementById('timer');
+        const statusDisplay = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+        const testSoundBtn = document.getElementById('testSoundBtn');
+
+        startBtn.addEventListener('click', () => {
+            if (countdown) {
+                clearInterval(countdown);
+            }
+            
+            let seconds = 5;
+            timerDisplay.textContent = seconds;
+            statusDisplay.textContent = '倒计时进行中... 请切换到其他标签页测试后台播放！';
+            startBtn.disabled = true;
+            
+            TestNotificationSystem.log('开始 5 秒倒计时');
+            
+            countdown = setInterval(() => {
+                seconds--;
+                timerDisplay.textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(countdown);
+                    timerDisplay.textContent = '🎉';
+                    statusDisplay.textContent = '倒计时结束！应该听到提示音。';
+                    startBtn.disabled = false;
+                    
+                    TestNotificationSystem.log('⏰ 倒计时结束，播放提示音');
+                    TestNotificationSystem.playSound();
+                }
+            }, 1000);
+        });
+
+        testSoundBtn.addEventListener('click', () => {
+            TestNotificationSystem.log('手动测试音频播放');
+            TestNotificationSystem.playSound();
+        });
+    </script>
+</body>
+</html>
