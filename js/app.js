@@ -316,7 +316,7 @@ const App = {
 
         // 切换回工作模式
         this.state.mode = 'work';
-        this.state.isRunning = false;
+        this.state.isRunning = true;
         this.state.isPaused = false;
 
         // 重置工作计时器
@@ -325,12 +325,16 @@ const App = {
 
         // 更新 UI
         this.updateUI();
-        UI.updateButtons('idle');
-        UI.updateStatusText('准备开始 ✨');
+        UI.updateButtons('running');
+        UI.updateStatusText('工作中 💼');
 
         // 发送完成提醒
         NotificationSystem.sendReminder('break', this.settings);
-        UI.showToast('🎉 完成一次护眼循环！');
+        UI.showToast('🎉 完成一次护眼循环！开始新的工作时间');
+
+        // 自动开始工作倒计时
+        this.workTimer.start();
+        console.log('自动开始工作倒计时');
     },
 
     // 加载统计数据
