@@ -284,16 +284,18 @@ const App = {
         // 发送提醒
         NotificationSystem.sendReminder('work', this.settings);
 
-        // 显示休息提醒（但不自动开始倒计时）
+        // 显示休息提醒并自动开始倒计时
         UI.showBreakReminder();
         UI.updateButtons('break');
         
-        // 重置界面状态
-        UI.elements.breakHint.textContent = '准备好后点击开始休息';
-        UI.elements.startBreakBtn.style.display = 'inline-flex';
+        // 更新界面状态为休息中
+        UI.elements.breakHint.textContent = '让眼睛放松一下';
+        UI.elements.startBreakBtn.style.display = 'none';
         UI.elements.breakTimer.textContent = this.settings.breakDuration;
 
-        console.log('等待用户手动开始休息');
+        // 自动开始休息倒计时
+        this.breakTimer.start();
+        console.log('自动开始休息倒计时');
     },
 
     // 休息计时回调
